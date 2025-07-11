@@ -2,7 +2,8 @@
 -- Includes OrionLib UI, full automation, anti-cheat detection
 -- Made by Zach (PRIVATE_EXECUTOR)
 
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/jensonhirst/Orion/main/source"))()
+
 
 local Window = OrionLib:MakeWindow({
     Name = "🏃 Doors & Rooms AutoRun",
