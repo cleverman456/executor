@@ -1,46 +1,69 @@
--- Rayfield UI Version of Doors + Rooms Auto Script
--- Made by Zach (PRIVATE_EXECUTOR)
+-- Kardin-Style Minimal UI Auto Script (Rayfield)
+-- Made for Zach (PRIVATE_EXECUTOR)
 
 -- Load Rayfield Library
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
--- Create Window
+-- UI Window
 local Window = Rayfield:CreateWindow({
-    Name = "Doors & Rooms Automation",
-    LoadingTitle = "Doors Auto Executor",
-    LoadingSubtitle = "by Zach",
-    ConfigurationSaving = {
-       Enabled = false,
-       FolderName = nil,
-       FileName = "DoorsAutoConfig"
-    },
-    Discord = {
-       Enabled = false,
-       Invite = "",
-       RememberJoins = true
-    },
-    KeySystem = false,
+    Name = "Doors | Rooms Auto",
+    LoadingTitle = "PRIVATE_EXECUTOR",
+    LoadingSubtitle = "Kardin Mode",
+    ConfigurationSaving = { Enabled = false },
+    Discord = { Enabled = false },
+    KeySystem = false
 })
 
--- Create Tabs
-local MainTab = Window:CreateTab("Main", 7733954769)
+-- Tabs & Toggles
+local AutoTab = Window:CreateTab("Automation", 7734053494)
 
-MainTab:CreateButton({
-    Name = "Start Auto Run (Detect Game Mode)",
-    Callback = function()
-        if game.PlaceId == 6839171747 then
-            Rayfield:Notify({Title = "The Rooms", Content = "Auto Mode Enabled (A-1000)", Duration = 5})
-            startRoomsRun()
-        else
-            Rayfield:Notify({Title = "Doors", Content = "Auto Speedrun Started", Duration = 5})
-            startDoorsRun()
-        end
-        startAntiCheat()
-    end,
+local toggles = {
+    autoDoors = false,
+    autoRooms = false,
+    speedBoost = false
+}
+
+AutoTab:CreateToggle({
+    Name = "Auto Complete Doors",
+    Default = false,
+    Callback = function(state)
+        toggles.autoDoors = state
+        if state then startDoorsRun() end
+    end
 })
 
-function firePrompt(obj)
-    if obj and obj:IsA("ProximityPrompt") then fireproximityprompt(obj) end
+AutoTab:CreateToggle({
+    Name = "Auto Complete Rooms (A-1000)",
+    Default = false,
+    Callback = function(state)
+        toggles.autoRooms = state
+        if state then startRoomsRun() end
+    end
+})
+
+AutoTab:CreateToggle({
+    Name = "Speed Boost",
+    Default = false,
+    Callback = function(state)
+        toggles.speedBoost = state
+        local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = state and 30 or 16 end
+    end
+})
+
+-- Keybind Support
+game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.F1 then toggles.autoDoors = not toggles.autoDoors if toggles.autoDoors then startDoorsRun() end end
+    if input.KeyCode == Enum.KeyCode.F2 then toggles.autoRooms = not toggles.autoRooms if toggles.autoRooms then startRoomsRun() end end
+    if input.KeyCode == Enum.KeyCode.F3 then toggles.speedBoost = not toggles.speedBoost
+        local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = toggles.speedBoost and 30 or 16 end
+    end
+end)
+
+function firePrompt(p)
+    if p and p:IsA("ProximityPrompt") then fireproximityprompt(p) end
 end
 
 function startDoorsRun()
@@ -50,6 +73,8 @@ function startDoorsRun()
     task.spawn(function()
         repeat task.wait(0.2)
             local room = workspace.CurrentRooms:FindFirstChild(tostring(LatestRoom.Value))
+            if not toggles.autoDoors then break end
+
             if room then
                 local key = room:FindFirstChild("Assets") and room.Assets:FindFirstChild("KeyObtain")
                 if key then firePrompt(key:FindFirstChildOfClass("ProximityPrompt")) end
@@ -60,17 +85,14 @@ function startDoorsRun()
                 local door = room:FindFirstChild("Door")
                 if door then
                     player.Character:PivotTo(door.CFrame * CFrame.new(0,0,2))
-                    local prompt = door:FindFirstChild("Lock") and door.Lock:FindFirstChildOfClass("ProximityPrompt")
-                    if prompt then firePrompt(prompt) end
+                    firePrompt(door:FindFirstChildOfClass("ProximityPrompt"))
                 end
             end
-        until LatestRoom.Value == 50
+        until LatestRoom.Value == 50 or not toggles.autoDoors
 
         solveLibrary()
-        repeat task.wait() until LatestRoom.Value == 100
+        repeat task.wait() until LatestRoom.Value == 100 or not toggles.autoDoors
         solveBreaker()
-
-        Rayfield:Notify({Title = "Finished", Content = "Auto Doors Run Complete!", Duration = 6})
     end)
 end
 
@@ -117,44 +139,36 @@ function solveBreaker()
 end
 
 function startRoomsRun()
+    local player = game.Players.LocalPlayer
     local RS = game:GetService("ReplicatedStorage")
     local LatestRoom = RS.GameData.LatestRoom
-    local player = game.Players.LocalPlayer
     local hrp = player.Character:WaitForChild("HumanoidRootPart")
 
-    while LatestRoom.Value < 1000 do
-        local room = workspace.CurrentRooms:FindFirstChild(tostring(LatestRoom.Value))
-        if room then
-            local door = room:FindFirstChild("Door")
-            if door then
-                hrp.CFrame = door.CFrame + Vector3.new(0,0,2)
-                local prompt = door:FindFirstChildOfClass("ProximityPrompt")
-                if prompt then firePrompt(prompt) end
+    task.spawn(function()
+        while toggles.autoRooms and LatestRoom.Value < 1000 do
+            local room = workspace.CurrentRooms:FindFirstChild(tostring(LatestRoom.Value))
+            if room and room:FindFirstChild("Door") then
+                hrp.CFrame = room.Door.CFrame + Vector3.new(0,0,2)
+                firePrompt(room.Door:FindFirstChildOfClass("ProximityPrompt"))
             end
-        end
 
-        local ent = workspace:FindFirstChild("A60") or workspace:FindFirstChild("A120")
-        if ent and ent.Main.Position.Y > -4 then
-            local locker = findLocker()
-            if locker then
-                hrp.CFrame = locker.CFrame + Vector3.new(0,0,2)
-                firePrompt(locker.Parent.HidePrompt)
-                task.wait(3.5)
+            local a60 = workspace:FindFirstChild("A60") or workspace:FindFirstChild("A120")
+            if a60 and a60.Main.Position.Y > -4 then
+                local locker = findLocker()
+                if locker then
+                    hrp.CFrame = locker.CFrame + Vector3.new(0,0,2)
+                    firePrompt(locker.Parent:FindFirstChild("HidePrompt"))
+                    task.wait(3.5)
+                end
             end
-        end
 
-        local a90 = player.PlayerGui:FindFirstChild("MainUI")
-        if a90 then
-            local module = a90.Initiator.Main_Game.RemoteListener.Modules:FindFirstChild("A90")
-            if module then module.Name = "A90_Bypassed" end
+            task.wait(0.3)
         end
-
-        task.wait(0.25)
-    end
-    Rayfield:Notify({Title = "Rooms", Content = "Reached Room A-1000!", Duration = 6})
+    end)
 end
 
 function findLocker()
+    local player = game.Players.LocalPlayer
     local lockers = {}
     for _,v in ipairs(workspace.CurrentRooms:GetDescendants()) do
         if v.Name == "Rooms_Locker" and v:FindFirstChild("Door") and v.HiddenPlayer.Value == nil then
@@ -162,25 +176,8 @@ function findLocker()
         end
     end
     table.sort(lockers, function(a,b)
-        return (a.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <
-               (b.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+        return (a.Position - player.Character.HumanoidRootPart.Position).Magnitude <
+               (b.Position - player.Character.HumanoidRootPart.Position).Magnitude
     end)
     return lockers[1]
-end
-
-function startAntiCheat()
-    local player = game.Players.LocalPlayer
-    local function notify(text)
-        Rayfield:Notify({Title = "Anti-Cheat Alert", Content = text, Duration = 5})
-    end
-
-    task.spawn(function()
-        while true do
-            local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-            if hum and hum.WalkSpeed > 30 then notify("Suspicious WalkSpeed Detected") end
-            if not player:FindFirstChild("PlayerScripts") then notify("Missing PlayerScripts!") end
-            if game:GetService("StarterGui").ResetPlayerGuiOnSpawn == false then notify("ResetButton Disabled") end
-            task.wait(3)
-        end
-    end)
 end
