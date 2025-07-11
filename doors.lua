@@ -22,12 +22,11 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false,
 })
 
--- Create Tab
+-- Create Tabs
 local MainTab = Window:CreateTab("Main", 7733954769)
 
--- Start Button
 MainTab:CreateButton({
-    Name = "Start Auto Run",
+    Name = "Start Auto Run (Detect Game Mode)",
     Callback = function()
         if game.PlaceId == 6839171747 then
             Rayfield:Notify({Title = "The Rooms", Content = "Auto Mode Enabled (A-1000)", Duration = 5})
