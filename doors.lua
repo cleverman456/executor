@@ -1,41 +1,47 @@
--- Loadstring-ready All-in-One Doors + Rooms Script
--- Includes OrionLib UI, full automation, anti-cheat detection
+-- Rayfield UI Version of Doors + Rooms Auto Script
 -- Made by Zach (PRIVATE_EXECUTOR)
 
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/jensonhirst/Orion/main/source"))()
+-- Load Rayfield Library
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
-
-local Window = OrionLib:MakeWindow({
-    Name = "🏃 Doors & Rooms AutoRun",
-    HidePremium = false,
-    SaveConfig = false,
-    ConfigFolder = "DoorsAutoSpeedrun"
+-- Create Window
+local Window = Rayfield:CreateWindow({
+    Name = "Doors & Rooms Automation",
+    LoadingTitle = "Doors Auto Executor",
+    LoadingSubtitle = "by Zach",
+    ConfigurationSaving = {
+       Enabled = false,
+       FolderName = nil,
+       FileName = "DoorsAutoConfig"
+    },
+    Discord = {
+       Enabled = false,
+       Invite = "",
+       RememberJoins = true
+    },
+    KeySystem = false,
 })
 
-local Tab = Window:MakeTab({
-    Name = "Auto Mode",
-    Icon = "rbxassetid://7734053494",
-    PremiumOnly = false
-})
+-- Create Tab
+local MainTab = Window:CreateTab("Main", 7733954769)
 
-Tab:AddButton({
+-- Start Button
+MainTab:CreateButton({
     Name = "Start Auto Run",
     Callback = function()
         if game.PlaceId == 6839171747 then
-            OrionLib:MakeNotification({Name="The Rooms",Content="Starting A-1000 Run",Time=4})
+            Rayfield:Notify({Title = "The Rooms", Content = "Auto Mode Enabled (A-1000)", Duration = 5})
             startRoomsRun()
         else
-            OrionLib:MakeNotification({Name="Doors",Content="Starting Speedrun Mode",Time=4})
+            Rayfield:Notify({Title = "Doors", Content = "Auto Speedrun Started", Duration = 5})
             startDoorsRun()
         end
         startAntiCheat()
-    end
+    end,
 })
 
 function firePrompt(obj)
-    if obj and obj:IsA("ProximityPrompt") then
-        fireproximityprompt(obj)
-    end
+    if obj and obj:IsA("ProximityPrompt") then fireproximityprompt(obj) end
 end
 
 function startDoorsRun()
@@ -65,7 +71,7 @@ function startDoorsRun()
         repeat task.wait() until LatestRoom.Value == 100
         solveBreaker()
 
-        OrionLib:MakeNotification({Name="Finished",Content="Auto Doors Run Complete!",Time=6})
+        Rayfield:Notify({Title = "Finished", Content = "Auto Doors Run Complete!", Duration = 6})
     end)
 end
 
@@ -138,15 +144,15 @@ function startRoomsRun()
             end
         end
 
-        if player.PlayerGui:FindFirstChild("MainUI") then
-            local a90 = player.PlayerGui.MainUI.Initiator.Main_Game.RemoteListener.Modules:FindFirstChild("A90")
-            if a90 then a90.Name = "A90_bypass" end
+        local a90 = player.PlayerGui:FindFirstChild("MainUI")
+        if a90 then
+            local module = a90.Initiator.Main_Game.RemoteListener.Modules:FindFirstChild("A90")
+            if module then module.Name = "A90_Bypassed" end
         end
 
         task.wait(0.25)
     end
-
-    OrionLib:MakeNotification({Name="Rooms", Content="Reached Room A-1000!", Time=6})
+    Rayfield:Notify({Title = "Rooms", Content = "Reached Room A-1000!", Duration = 6})
 end
 
 function findLocker()
@@ -166,7 +172,7 @@ end
 function startAntiCheat()
     local player = game.Players.LocalPlayer
     local function notify(text)
-        OrionLib:MakeNotification({Name="Anti-Cheat Alert",Content=text,Time=5})
+        Rayfield:Notify({Title = "Anti-Cheat Alert", Content = text, Duration = 5})
     end
 
     task.spawn(function()
@@ -174,7 +180,7 @@ function startAntiCheat()
             local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
             if hum and hum.WalkSpeed > 30 then notify("Suspicious WalkSpeed Detected") end
             if not player:FindFirstChild("PlayerScripts") then notify("Missing PlayerScripts!") end
-            if game:GetService("StarterGui").ResetPlayerGuiOnSpawn == false then notify("ResetButton Blocked") end
+            if game:GetService("StarterGui").ResetPlayerGuiOnSpawn == false then notify("ResetButton Disabled") end
             task.wait(3)
         end
     end)
